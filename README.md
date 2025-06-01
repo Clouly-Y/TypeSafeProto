@@ -41,6 +41,10 @@ class CustomClass{
     anyBasicType: number|boolean|string|Date|null|undefined;  
     //no proto.member
     otherField: number;  
+   
+    add(a:number,b:number):number{   
+        return a + b;   
+    }   
 }
 ```
 没有被 `@proto.member` 标注的字段，如`otherField`,将不会被序列化。
@@ -50,6 +54,7 @@ let obj=new CustomClass();
 //obj.anyBasicType = ..........  
 const data = proto.encode(obj);  
 const decoded = proto.decode(data, CustomClass);
+//decoded.add(1,3) === 4
 ```
 ### 自定义类型
 ``` TypeScript
@@ -192,6 +197,10 @@ class CustomClass{
 
     // Fields without @proto.member won't be serialized
     otherField: number;  
+    
+    add(a:number,b:number):number{   
+        return a + b;   
+    }  
 }
 ```
 #### Serialization
@@ -200,6 +209,7 @@ let obj=new CustomClass();
 //obj.anyBasicType = ..........  
 const data = proto.encode(obj);  
 const decoded = proto.decode(data, CustomClass);
+//decoded.add(1,3) === 4
 ```
 ### Custom Class Type
 ``` TypeScript
