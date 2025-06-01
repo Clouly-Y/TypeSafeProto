@@ -30,7 +30,7 @@
 
 ### 引入项目
 `npm i typesafeproto`  
-`import proto from "typesafeproto"`;
+`import proto from "typesafeproto";`
 
 ### 基础类型
 `type 基础类型 = number|boolean|string|Date|null|undefined`
@@ -78,11 +78,11 @@ class CustomClass{
     class2: CustomClass2|null;  
     @proto.member(3, CustomClass2)  
     arr1: CustomClass2[];  
-    @proto.member(3, CustomClass2)  
+    @proto.member(4, CustomClass2)  
     arr2: CustomClass2[][][][][][][][];  
-    @proto.member(4, Set, CustomClass2)//标号4，类型指定：Set<CustomClass2>  
+    @proto.member(5, Set, CustomClass2)//标号4，类型指定：Set<CustomClass2>  
     set: Set<CustomClass2>;  
-    @proto.member(5, Map, Number, CustomClass2)  
+    @proto.member(6, Map, Number, CustomClass2)  
     map: Map<number, CustomClass2>;  
 }  
 ```
@@ -126,11 +126,11 @@ class CustomClass{
     class2: object;  
     @proto.member(3, record)  
     arr1: object[];  
-    @proto.member(3, record)  
+    @proto.member(4, record)  
     arr2: object[][][][][][][][];  
-    @proto.member(4, Set, record)  
+    @proto.member(5, Set, record)  
     set: Set<object>;  
-    @proto.member(5, Map, Number, record)  
+    @proto.member(6, Map, Number, record)  
     map: Map<number, object>;  
 }  
 ```  
@@ -233,11 +233,11 @@ class CustomClass{
     class2: CustomClass2|null;  
     @proto.member(3, CustomClass2)  
     arr1: CustomClass2[];  
-    @proto.member(3, CustomClass2)  
+    @proto.member(4, CustomClass2)  
     arr2: CustomClass2[][][][][][][][];  
-    @proto.member(4, Set, CustomClass2)//index:4,type:Set<CustomClass2>  
+    @proto.member(5, Set, CustomClass2)//index:4,type:Set<CustomClass2>  
     set: Set<CustomClass2>;  
-    @proto.member(5, Map, Number, CustomClass2)  
+    @proto.member(6, Map, Number, CustomClass2)  
     map: Map<number, CustomClass2>;  
 }  
 ```
@@ -280,11 +280,11 @@ class CustomClass{
     class2: object;  
     @proto.member(3, record)  
     arr1: object[];  
-    @proto.member(3, record)  
+    @proto.member(4, record)  
     arr2: object[][][][][][][][];  
-    @proto.member(4, Set, record)  
+    @proto.member(5, Set, record)  
     set: Set<object>;  
-    @proto.member(5, Map, Number, record)  
+    @proto.member(6, Map, Number, record)  
     map: Map<number, object>;  
 }  
 ```  
