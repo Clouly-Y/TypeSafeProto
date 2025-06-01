@@ -20,11 +20,11 @@
     "build": "npm run clean && rollup -c && npm run mergedts",
     "mergedts": "api-extractor run",
     "clean": "rimraf dist lib",
-    "cleandts": "rimraf dist/dts"
+    "cleandts": "rimraf dist/dts dist/tsdoc-metadata.json"
   },
   "repository": {
     "type": "git",
-    "url": "git@gitee.com:yue-yongxin/type-safe-proto.git"
+    "url": "https://github.com/Clouly-Y/TypeSafeProto"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.52.8",
