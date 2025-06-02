@@ -80,7 +80,7 @@ class CustomClass{
     arr1: CustomClass2[];  
     @proto.member(4, CustomClass2)  
     arr2: CustomClass2[][][][][][][][];  
-    @proto.member(5, Set, CustomClass2)//标号4，类型指定：Set<CustomClass2>  
+    @proto.member(5, Set, CustomClass2)//标号5，类型指定：Set<CustomClass2>  
     set: Set<CustomClass2>;  
     @proto.member(6, Map, Number, CustomClass2)  
     map: Map<number, CustomClass2>;  
@@ -235,7 +235,7 @@ class CustomClass{
     arr1: CustomClass2[];  
     @proto.member(4, CustomClass2)  
     arr2: CustomClass2[][][][][][][][];  
-    @proto.member(5, Set, CustomClass2)//index:4,type:Set<CustomClass2>  
+    @proto.member(5, Set, CustomClass2)//index:5,type:Set<CustomClass2>  
     set: Set<CustomClass2>;  
     @proto.member(6, Map, Number, CustomClass2)  
     map: Map<number, CustomClass2>;  
