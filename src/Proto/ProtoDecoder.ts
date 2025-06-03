@@ -3,7 +3,7 @@ import { getOrCreateRemixClassMeta } from "../ClassMeta";
 import { Basic } from "../Decorator";
 import Mark from "../Mark";
 import { TypeCodeHelper } from "../TypeCodeHelper";
-import { Constructor, PotentialType, TypeRecord } from "../TypeDef";
+import { CombinedTypeRecord, Constructor, PotentialType, TypeRecord } from "../TypeDef";
 
 export function protoDecode<T extends object>(data: Uint8Array, type: Constructor<T> | TypeRecord<T>): T {
     const decoder = new BinaryDecoder(data);
@@ -16,12 +16,15 @@ function decodeRecord<T extends object>(decoder: BinaryDecoder, byteLength: numb
 
     let aimPos = decoder.currentPos + byteLength;
     let classType: Constructor<T>;
-    if (isTypeRecord(type)) {
-        const code = decoder.decodeNumber(null);
-        classType = TypeCodeHelper.get(type).codeToType(code);
-    }
-    else {
+    if (!isTypeRecord(type))
         classType = type;
+    else {
+        let typeOrHelper: Constructor<T> | TypeCodeHelper<T> = TypeCodeHelper.get(type);
+        while (typeOrHelper instanceof TypeCodeHelper) {
+            const nextCode = decoder.decodeNumber(null);
+            typeOrHelper = typeOrHelper.codeToType(nextCode);
+        }
+        classType = typeOrHelper;
     }
 
     const remixClassMeta = getOrCreateRemixClassMeta(classType);
@@ -50,7 +53,7 @@ function decodeRecord<T extends object>(decoder: BinaryDecoder, byteLength: numb
         setted.push(remixFieldMeta.name);
     }
 
-    for (const remixFieldMeta of remixClassMeta.filedNameMap.values()) {
+    for (const remixFieldMeta of remixClassMeta.fieldNameMap.values()) {
         if (setted.indexOf(remixFieldMeta.name) > -1)
             continue;
         if (remixFieldMeta.defValue === undefined)
@@ -119,6 +122,6 @@ function decodeSet(decoder: BinaryDecoder, byteLength: number, valueType: Potent
     return res;
 }
 
-function isTypeRecord<T extends object>(type: PotentialType<T>): type is TypeRecord<T> {
+function isTypeRecord<T extends object>(type: PotentialType<T>): type is TypeRecord<T> | CombinedTypeRecord<T> {
     return typeof type != "function" && type != null;
 }

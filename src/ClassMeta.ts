@@ -20,7 +20,7 @@ export class FieldMeta {
 export const remixClassMetaMap: Map<Function, RemixClassMeta> = new Map();
 export class RemixClassMeta {
     /** name/RemixFieldMeta */
-    public filedNameMap: Map<string, RemixFieldMeta> = new Map();
+    public fieldNameMap: Map<string, RemixFieldMeta> = new Map();
     /** hierarchy/index/RemixFieldMeta */
     public fieldIndexMap: Map<number, Map<number, RemixFieldMeta>> = new Map();
 }
@@ -76,7 +76,7 @@ export function getOrCreateRemixClassMeta(classType: Constructor): RemixClassMet
                     continue;
                 const remixFieldMeta = new RemixFieldMeta(fieldMeta.name, fieldMeta.index, hierarchy, fieldMeta.typeArr, fieldMeta.defValue);
 
-                remixClassMeta.filedNameMap.set(fieldMeta.name, remixFieldMeta);
+                remixClassMeta.fieldNameMap.set(fieldMeta.name, remixFieldMeta);
 
                 let subMap = remixClassMeta.fieldIndexMap.get(hierarchy);
                 if (subMap === undefined) {

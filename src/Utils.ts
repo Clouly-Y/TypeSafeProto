@@ -23,7 +23,17 @@ export function protoClone<T extends object>(object: T): T {
 export function isProtomember(classType: Constructor, fieldName?: string): boolean {
     const remixClassMeta = getOrCreateRemixClassMeta(classType);
     if (fieldName === undefined)
-        return remixClassMeta.filedNameMap.size > 0;
+        return remixClassMeta.fieldNameMap.size > 0;
     else
-        return remixClassMeta.filedNameMap.has(fieldName);
+        return remixClassMeta.fieldNameMap.has(fieldName);
+}
+
+export function fieldNameToIndex(classType: Constructor, fieldName: string): Readonly<{ hierarchy: number, index: number }> | undefined {
+    const remixClassMeta = getOrCreateRemixClassMeta(classType);
+    return remixClassMeta.fieldNameMap.get(fieldName);
+}
+
+export function indexToFieldName(classType: Constructor, hierarchy: number, index: number): string | undefined {
+    const remixClassMeta = getOrCreateRemixClassMeta(classType);
+    return remixClassMeta.fieldIndexMap.get(hierarchy)?.get(index)?.name;
 }

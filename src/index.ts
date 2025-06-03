@@ -4,7 +4,7 @@ import { defValue, protoMember } from "./Decorator";
 import { protoDecode } from "./Proto/ProtoDecoder";
 import { protoEncode } from "./Proto/ProtoEncoder";
 import { TypeCodeHelper } from "./TypeCodeHelper";
-import { isProtomember, protoClone, releaseCaches } from "./Utils";
+import { fieldNameToIndex, indexToFieldName, isProtomember, protoClone, releaseCaches } from "./Utils";
 
 export type { BaiscType, TypeRecord } from "./TypeDef";
 export type { BinaryDecoder, BinaryEncoder, TypeCodeHelper };
@@ -17,6 +17,8 @@ const proto = {
     releaseCaches: releaseCaches,
     isMember: isProtomember,
     clone: protoClone,
+    fieldNameToIndex: fieldNameToIndex,
+    indexToFieldName: indexToFieldName,
 
     BinaryDecoder: BinaryDecoder,
     BinaryEncoder: BinaryEncoder,

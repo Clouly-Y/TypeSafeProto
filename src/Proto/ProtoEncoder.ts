@@ -18,12 +18,15 @@ function encodeRecord<T extends object>(object: T, type: PotentialType): Uint8Ar
     /** 有record: +类型号 */
     if (typeof type === "object" && type != null) {
         let typeCode = TypeCodeHelper.get(type).typeToCode(classType);
-        encoder.encodeNumber(typeCode);
+        if (typeof typeCode === "number")
+            encoder.encodeNumber(typeCode);
+        else for (const code of typeCode)
+            encoder.encodeNumber(code);
     }
 
     const remixClassMeta = getOrCreateRemixClassMeta(classType);
     for (const key in object) {
-        const remixFieldMeta = remixClassMeta.filedNameMap.get(key);
+        const remixFieldMeta = remixClassMeta.fieldNameMap.get(key);
         if (remixFieldMeta === undefined)
             continue;
         const value = object[key];
