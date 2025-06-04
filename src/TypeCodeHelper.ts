@@ -23,12 +23,12 @@ export class TypeCodeHelper<T extends object, TCombined extends boolean = true |
     private typeToCodeMap: TypeToCodeMap = new Map();
     private codeToTypeMap: CodeToTypeMap<T> = new Map();
 
-    public codeToType(code: number): Constructor<T> | TypeCodeHelper<T> {
+    public codeToType(code: number): TCombined extends true ? Constructor<T> | TypeCodeHelper<T> : Constructor<T> {
         const typeOrRecord = this.codeToTypeMap.get(code);
         if (typeOrRecord === undefined)
             throw new Error("Record missing code " + code);
         else if (typeof typeOrRecord === "object")
-            return TypeCodeHelper.get(typeOrRecord);
+            return TypeCodeHelper.get(typeOrRecord) as any;
         else
             return typeOrRecord;
     }
