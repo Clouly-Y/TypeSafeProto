@@ -2,7 +2,7 @@
   "name": "typesafeproto",
   "author": "Clouly-Y <943592084@qq.com>",
   "license": "ISC",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "TypeScript中近乎完美的Class对象序列化解决方案 A near-perfect class object serialization solution for TypeScript.",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
@@ -17,10 +17,11 @@
     "serialize"
   ],
   "scripts": {
-    "build": "npm run clean && rollup -c && npm run mergedts",
+    "build": "npm run clean_before && rollup -c && (npm run mergedts || npm run true) && npm run clean_after",
+    "true": "",
     "mergedts": "api-extractor run",
-    "clean": "rimraf dist lib",
-    "cleandts": "rimraf dist/dts dist/tsdoc-metadata.json"
+    "clean_before": "rimraf dist lib",
+    "clean_after": "rimraf dist/dts dist/tsdoc-metadata.json"
   },
   "repository": {
     "type": "git",
