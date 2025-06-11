@@ -139,6 +139,20 @@ class CustomClass{
 const data = proto.encode(obj, record);  
 const decoded = proto.decode(data, record);  
 ```  
+
+#### 混合类型表
+``` TypeScript
+//type CombinedTypeRecord<T extends object = object> = { [P in number]: Constructor<T> | CombinedTypeRecord<T>; }  
+const combinedRecord: CombinedTypeRecord<object> = {  
+    0:CustomClass,  
+    1:CustomClass1,  
+    2:record1,  
+    3:record2,  
+    //......  
+}  
+```
+可以组合多个类型表和多个类型为一张混合类型表，使用方法同普通类型表。
+
 ## Tips
 `type 基础类型 = number|boolean|string|Date|null|undefined`   
 对于类型指定：Number、Boolean、String、Date、null均会将字段指定为“基础类型”，实际使用上并无区别。  
@@ -150,12 +164,13 @@ Set或Map即使存储基础类型，`@proto.member`的第一个类型指定也�
 2、不支持Map、Array、Set互相嵌套(支持交错数组)。  
 3、小数将压缩为float32，注意精度问题。  
 4、`@proto.member` 指定的字段标号: >=0 ,不能重复（可以与基类字段重复）,尽量小。  
-4、对于已经存在的数据，可以删除类定义中的`@proto.member`,但是字段标号不能重用。  
-5、对于已经存在的数据，不能更改类继承关系。  
-6、不区分 `null` `undefined`。  
-7、反序列化时会执行类的构造函数，请保证参数全为`undefined`时不会抛出报错。  
-8、不支持循环引用：内部有循环引用的对象，调用压缩函数会直接卡死。  
-9、`proto.encode`只能压缩自定义类。
+5、对于已经存在的数据，可以删除类定义中的`@proto.member`,但是字段标号不能重用。  
+6、对于已经存在的数据，不能更改类继承关系。  
+7、不区分 `null` `undefined`。  
+8、反序列化时会执行类的构造函数，请保证参数全为`undefined`时不会抛出报错。  
+9、不支持循环引用：内部有循环引用的对象，调用压缩函数会直接卡死。  
+10、`proto.encode`只能压缩自定义类，不能压缩普通object。
+11、类型表应当且只能在编译时指定其中的类型和类型码，不应也不支持在运行中动态添加或者删改。
 
 # english
 **Author**: Clouly 943592084@qq.com  
@@ -168,18 +183,18 @@ Set或Map即使存储基础类型，`@proto.member`的第一个类型指定也�
 
 ## Features
 
-1、Prototype chain restoration during deserialization. (concrete types and generics)  
-2、Field names compressed to two numbers. (inheritance level + index)  
-3、Variable-length number encoding. (modified msgpack standard)  
-4、Decorator syntax - no additional schema definitions required.  
-5、Efficient binary compression.  
-6、No intermediate objects created - reduces memory garbage.(unlike class-transformer)  
-7、Forward and backward compatibility support.  
-8、No external prototype definitions needed. (unlike protobuf)  
-9、TextEncoder-independent - works directly in mini-games.  
-10、Supports Map, Set, and Date.  
-11、Flexible type inheritance.  
-12、Ultra-lightweight and ready-to-use.  
+1.Prototype chain restoration during deserialization. (concrete types and generics)  
+2.Field names compressed to two numbers. (inheritance level + index)  
+3.Variable-length number encoding. (modified msgpack standard)  
+4.Decorator syntax - no additional schema definitions required.  
+5.Efficient binary compression.  
+6.No intermediate objects created - reduces memory garbage.(unlike class-transformer)  
+7.Forward and backward compatibility support.  
+8.No external prototype definitions needed. (unlike protobuf)  
+9.TextEncoder-independent - works directly in mini-games.  
+10.Supports Map, Set, and Date.  
+11.Flexible type inheritance.  
+12.Ultra-lightweight and ready-to-use.  
 
 ## Usage
 
@@ -260,7 +275,7 @@ Fields will be omitted during compression when:
     Default value === null && field value == null  
 
 ### Generic Serialization
-First define a type record:  
+First define a TypeRecord:  
 ``` TypeScript
 //type TypeRecord<T extends object = object> = Record<number, Constructor<T>>;  
 const record: TypeRecord<object> = {  
@@ -293,6 +308,19 @@ Or during serialization:
 const data = proto.encode(obj, record);  
 const decoded = proto.decode(data, record);  
 ```  
+#### combine multiple TypeRecord
+``` TypeScript
+//type CombinedTypeRecord<T extends object = object> = { [P in number]: Constructor<T> | CombinedTypeRecord<T>; }  
+const combinedRecord: CombinedTypeRecord<object> = {  
+    0:CustomClass,  
+    1:CustomClass1,  
+    2:record1,  
+    3:record2,  
+    //......  
+}  
+```
+Multiple type records can be combined into one CombinedTypeRecord, which can be used in the same way as a TypeRecord.
+
 ## Tips
 `type BasicType = number|boolean|string|Date|null|undefined`   
 Number, Boolean, String, Date, and null are all treated as BasicType.  
@@ -300,13 +328,14 @@ BasicType value stored in custom type fields will serialize correctly.
 For Sets or Maps, the first type parameter must explicitly be Set or Map.  
   
 ## Important Notes
-1、BigInt not supported.  
-2、No nested Map/Array/Set. (jagged arrays supported)  
-3、Decimals compressed as float32 - note precision limitations.  
-4、`@proto.member` index must be: ≥0, unique (can reuse index of parent class fields), and preferably small.
-4、For existing data,can remove `@proto.member` but cannot reuse index.  
-5、For existing data,cannot modify class inheritance.  
-6、`null` and `undefined` are treated identically.  
-7、Constructors must handle all-undefined parameters during deserialization.  
-8、Circular references will cause infinite loops.  
-9、`proto.encode` only works with custom classes.
+1.BigInt not supported.  
+2.No nested Map/Array/Set. (jagged arrays supported)  
+3.Decimals compressed as float32 - note precision limitations.  
+4.`@proto.member` index must be: ≥0, unique (can reuse index of parent class fields), and preferably small.
+5.For existing data,can remove `@proto.member` but cannot reuse index.  
+6.For existing data,cannot modify class inheritance.  
+7.`null` and `undefined` are treated identically.  
+8.Constructors must handle all-undefined parameters during deserialization.  
+9.Circular references will cause infinite loops.  
+10.`proto.encode` only works with custom classes.Cant work with normal object.
+11.The types and type codes in a TypeRecord or a CombinedTypeRecord must be specified at compile time.Runtime modifications are not allowed.
