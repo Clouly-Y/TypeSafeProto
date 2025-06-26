@@ -4,6 +4,8 @@ import { defValue, protoMember } from "./Decorator";
 import Mark from "./Mark";
 import { protoDecode } from "./Proto/ProtoDecoder";
 import { protoEncode } from "./Proto/ProtoEncoder";
+import { protoFromObj } from "./Proto/ProtoFromObj";
+import { protoToObj } from "./Proto/ProtoToObj";
 import { TypeCodeHelper } from "./TypeCodeHelper";
 import { fieldNameToIndex, indexToFieldName, isProtomember, protoClone, releaseCaches } from "./Utils";
 
@@ -15,6 +17,8 @@ const proto = {
     member: protoMember,
     decode: protoDecode,
     encode: protoEncode,
+    toObj: protoToObj,
+    fromObj: protoFromObj,
     releaseCaches: releaseCaches,
     isMember: isProtomember,
     clone: protoClone,
