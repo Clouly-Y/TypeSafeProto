@@ -17,7 +17,7 @@ function recordFromObj<T extends object>(object: any, type: PotentialType<T>): T
     else {
         let typeOrHelper: Constructor<T> | TypeCodeHelper<T> = TypeCodeHelper.get(type);
         for (const typeCode of object["__typeCode"])
-            (typeOrHelper = typeOrHelper as TypeCodeHelper<T>).codeToType(typeCode);
+            typeOrHelper = (typeOrHelper as TypeCodeHelper<T>).codeToType(typeCode);
         classType = typeOrHelper as unknown as Constructor<T>;
     }
 
@@ -29,7 +29,7 @@ function recordFromObj<T extends object>(object: any, type: PotentialType<T>): T
         if (remixFieldMeta === undefined)
             continue;
 
-        const obj = decodeUnknown(object.key, remixFieldMeta.typeArr);
+        const obj = decodeUnknown(object[key], remixFieldMeta.typeArr);
         res[remixFieldMeta.name] = obj;
         setted.push(remixFieldMeta.name);
     }
