@@ -14,10 +14,6 @@ export class StreamReader {
         this.offset += num;
     }
 
-    public lookU8(): number {
-        return this.view.getUint8(this.offset);
-    }
-
     public readU8(): number {
         const value = this.view.getUint8(this.offset);
         this.offset++;

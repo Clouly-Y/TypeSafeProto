@@ -1,17 +1,16 @@
 import { getOrCreateRemixClassMeta } from "../ClassMeta";
 import { isSameArray } from "../Helper";
 import { TypeCodeHelper } from "../TypeCodeHelper";
-import { CombinedTypeRecord, Constructor, isTypeRecord, TypeRecord } from "../TypeDef";
-import { ArrayTypeLog, BasicTypeLog, CustomTypeLog, MapTypeLog, SetTypeLog, TypeLog } from "../TypeLog";
+import { BaiscType, Constructor, PotentialType, TypeRecord } from "../TypeDef";
 
-export function protoToObj<T extends object>(classInstance: T, typecodeRecord: TypeRecord<T> | CombinedTypeRecord<T> | null = null): object {
+export function protoToObj<T extends object>(classInstance: T, typecodeRecord: TypeRecord<T> | null = null): object {
     if (classInstance.constructor === Object)
         throw new Error("classInstance must be a custom class!");
 
     return recordToObj(classInstance, typecodeRecord);
 }
 
-function recordToObj<T extends object>(object: T, type: TypeRecord<T> | CombinedTypeRecord<T> | null): object {
+function recordToObj<T extends object>(object: T, type: PotentialType): object {
     const res: any = {};
     const classType = object.constructor as Constructor<T>;
     /** 有record: +类型号 */
@@ -35,49 +34,47 @@ function recordToObj<T extends object>(object: T, type: TypeRecord<T> | Combined
             continue;
         if (value == null && remixFieldMeta.defValue == null)
             continue;
-        res[remixFieldMeta.name] = unknownToObj(value, remixFieldMeta.typeLog);
+        res[remixFieldMeta.name] = encodeUnknown(value, remixFieldMeta.typeArr);
     }
     return res;
 }
 
-function unknownToObj(object: unknown, typeLog: TypeLog): unknown {
-    if (object == null)
+function encodeUnknown(object: unknown, typeArr: PotentialType[]): unknown {
+    if (object instanceof Date || object == null || typeof object === "string" || typeof object === "number" || typeof object === "boolean")
         return object;
-    if (typeLog instanceof BasicTypeLog)
-        return object;
-    else if (typeLog instanceof ArrayTypeLog)
-        return arrayToObj(object as Array<unknown>, typeLog.valueType);
-    else if (typeLog instanceof SetTypeLog)
-        return setToObj(object as Set<unknown>, typeLog.valueType);
-    else if (typeLog instanceof MapTypeLog)
-        return mapToObj(object as Map<unknown, unknown>, typeLog.keyType, typeLog.valueType);
-    else if (typeLog instanceof CustomTypeLog) {
-        const type = isTypeRecord(typeLog.type) ? typeLog.type : null;
-        return recordToObj(object, type);
-    }
+    if (object instanceof Map)
+        return mapToObj(object, typeArr[1], typeArr[2]);
+    else if (object instanceof Set)
+        return setToObj(object, typeArr[1]);
+    else if (Array.isArray(object))
+        return arrayToObj(object, typeArr[0]);
     else
-        throw new Error("Unknown Type Log");
+        return recordToObj(object, typeArr[0]);
 }
 
-function arrayToObj(array: Array<unknown>, valueTypeLog: TypeLog): Array<unknown> {
+function arrayToObj(array: Array<BaiscType | object>, type: PotentialType): Array<unknown> {
     const res: unknown[] = [];
+    const typeArr = [type];
     for (const ele of array)
-        res.push(unknownToObj(ele, valueTypeLog));
+        res.push(encodeUnknown(ele, typeArr));
     return res;
 }
 
-function mapToObj(map: Map<unknown, unknown>, keyTypeLog: TypeLog, valueTypeLog: TypeLog): Array<unknown> {
+function mapToObj(map: Map<BaiscType | object, BaiscType | object>, keyType: PotentialType, valueType: PotentialType): Array<unknown> {
     const res: unknown[] = [];
+    const keyTypeArr = [keyType];
+    const valueTypeArr = [valueType];
     for (const [key, value] of map) {
-        res.push(unknownToObj(key, keyTypeLog));
-        res.push(unknownToObj(value, valueTypeLog));
+        res.push(encodeUnknown(key, keyTypeArr));
+        res.push(encodeUnknown(value, valueTypeArr));
     }
     return res;
 }
 
-function setToObj(set: Set<unknown>, valueTypeLog: TypeLog): Array<unknown> {
+function setToObj(set: Set<BaiscType | object>, valueType: PotentialType): Array<unknown> {
     const res: unknown[] = [];
+    const typeArr = [valueType];
     for (const ele of set)
-        res.push(unknownToObj(ele, valueTypeLog));
+        res.push(encodeUnknown(ele, typeArr));
     return res;
 }

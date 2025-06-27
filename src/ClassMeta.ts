@@ -1,6 +1,5 @@
 import { getAllParentClasses } from "./Helper";
-import { Constructor } from "./TypeDef";
-import { TypeLog } from "./TypeLog";
+import { Constructor, PotentialType } from "./TypeDef";
 
 export const classMetaMap: Map<Function, ClassMeta> = new Map();
 
@@ -11,7 +10,7 @@ export class ClassMeta {
 export class FieldMeta {
     public name: string;
     public index: number | undefined = undefined;
-    public typeLog!: TypeLog;
+    public typeArr: Array<PotentialType> = [null, null, null];
     public defValue: unknown = undefined;
     constructor(name: string) {
         this.name = name;
@@ -30,14 +29,14 @@ export class RemixFieldMeta {
     public name: string;
     public index: number;
     public hierarchy: number;
-    public typeLog: TypeLog;
+    public typeArr: Array<PotentialType>;
     public defValue: unknown;
 
-    constructor(name: string, index: number, inheritanceHierarchy: number, typeLog: TypeLog, defValue: unknown) {
+    constructor(name: string, index: number, inheritanceHierarchy: number, typeArr: Array<PotentialType>, defValue: unknown) {
         this.name = name;
         this.index = index;
         this.hierarchy = inheritanceHierarchy;
-        this.typeLog = typeLog;
+        this.typeArr = typeArr;
         this.defValue = defValue;
     }
 }
@@ -75,7 +74,7 @@ export function getOrCreateRemixClassMeta(classType: Constructor): RemixClassMet
             for (const fieldMeta of classMeta.fieldMap.values()) {
                 if (fieldMeta.index === undefined)
                     continue;
-                const remixFieldMeta = new RemixFieldMeta(fieldMeta.name, fieldMeta.index, hierarchy, fieldMeta.typeLog, fieldMeta.defValue);
+                const remixFieldMeta = new RemixFieldMeta(fieldMeta.name, fieldMeta.index, hierarchy, fieldMeta.typeArr, fieldMeta.defValue);
 
                 remixClassMeta.fieldNameMap.set(fieldMeta.name, remixFieldMeta);
 
