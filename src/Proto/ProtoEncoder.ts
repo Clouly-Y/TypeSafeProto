@@ -3,20 +3,22 @@ import { getOrCreateRemixClassMeta } from "../ClassMeta";
 import EncoderPool from "../EncoderPool";
 import { isSameArray } from "../Helper";
 import { TypeCodeHelper } from "../TypeCodeHelper";
-import { BaiscType, Constructor, PotentialType, TypeRecord } from "../TypeDef";
+import { CombinedTypeRecord, Constructor, isTypeRecord, TypeRecord } from "../TypeDef";
+import { ArrayTypeLog, BasicTypeLog, CustomTypeLog, MapTypeLog, SetTypeLog, TypeLog } from "../TypeLog";
+import { utf8ByteLength } from "../utf8";
 
-export function protoEncode<T extends object>(classInstance: T, typecodeRecord: TypeRecord<T> | null = null): Uint8Array {
+export function protoEncode<T extends object>(classInstance: T, typecodeRecord: TypeRecord | CombinedTypeRecord | null = null): Uint8Array {
     if (classInstance.constructor === Object)
         throw new Error("classInstance must be a custom class!");
 
     return encodeRecord(classInstance, typecodeRecord);
 }
 
-function encodeRecord<T extends object>(object: T, type: PotentialType): Uint8Array {
+function encodeRecord(object: any, type: TypeRecord | CombinedTypeRecord | null): Uint8Array {
     const encoder = EncoderPool.spawn();
-    const classType = object.constructor as Constructor<T>;
+    const classType = object.constructor as Constructor;
     /** 有record: +类型号 */
-    if (typeof type === "object" && type != null) {
+    if (type) {
         let typeCode = TypeCodeHelper.get(type).typeToCode(classType);
         if (typeof typeCode === "number")
             encoder.encodeNumber(typeCode);
@@ -39,7 +41,7 @@ function encodeRecord<T extends object>(object: T, type: PotentialType): Uint8Ar
         /** +层级 +标号 +长度？ +数据*/
         encoder.encodeNumber(remixFieldMeta.hierarchy);
         encoder.encodeNumber(remixFieldMeta.index);
-        encodeUnknown(encoder, value, remixFieldMeta.typeArr);
+        encodeUnknown(encoder, value, remixFieldMeta.typeLog);
     }
     const res = encoder.toArray();
     EncoderPool.despawn(encoder);
@@ -47,61 +49,77 @@ function encodeRecord<T extends object>(object: T, type: PotentialType): Uint8Ar
 }
 
 
-function encodeUnknown(encoder: BinaryEncoder, object: unknown, typeArr: PotentialType[]) {
-    if (object instanceof Date || object == null || typeof object === "string" || typeof object === "number" || typeof object === "boolean") {
-        encoder.encodeBasicType(object);
+function encodeUnknown(encoder: BinaryEncoder, object: unknown, typeLog: TypeLog) {
+    if (object == null) {
+        encoder.encodeNil();
         return;
     }
 
-    let buffer: Uint8Array;
-    if (object instanceof Map) {
-        buffer = encodeMap(object, typeArr[1], typeArr[2]);
-        encoder.encodeArrayHeader(buffer.length);
+    if (typeLog instanceof BasicTypeLog) {
+        switch (typeLog.type) {
+            case Number: encoder.encodeNumber(object as number); return;
+            case Boolean: encoder.encodeBoolean(object as boolean); return;
+            case Date: encoder.encodeNumber((object as Date).getTime()); return;
+            case String:
+                const length = utf8ByteLength(object as string);
+                encoder.encodeVarHeader(length);
+                encoder.encodeString(object as string);
+                return;
+            default: throw new Error("Unknown Basic Type");
+        }
     }
-    else if (object instanceof Set) {
-        buffer = encodeSet(object, typeArr[1]);
-        encoder.encodeArrayHeader(buffer.length);
+    else if (typeLog instanceof CustomTypeLog) {
+        let type = isTypeRecord(typeLog.type) ? typeLog.type : null;
+        const u8arr = encodeRecord(object, type);
+        encoder.encodeVarHeader(u8arr.length);
+        encoder.encodeUint8Array(u8arr);
+        return;
     }
-    else if (Array.isArray(object)) {
-        buffer = encodeArray(object, typeArr[0]);
-        encoder.encodeArrayHeader(buffer.length);
+    else if (typeLog instanceof ArrayTypeLog) {
+        const u8arr = encodeArray(object as Array<unknown>, typeLog.valueType);
+        encoder.encodeVarHeader(u8arr.length);
+        encoder.encodeUint8Array(u8arr);
+        return;
     }
-    else {
-        buffer = encodeRecord(object, typeArr[0]);
-        encoder.encodeRecordHeader(buffer.length);
+    else if (typeLog instanceof MapTypeLog) {
+        const u8arr = encodeMap(object as Map<unknown, unknown>, typeLog.keyType, typeLog.valueType);
+        encoder.encodeVarHeader(u8arr.length);
+        encoder.encodeUint8Array(u8arr);
+        return;
     }
-
-    encoder.encodeUint8Array(buffer);
+    else if (typeLog instanceof SetTypeLog) {
+        const u8arr = encodeSet(object as Set<unknown>, typeLog.valueType);
+        encoder.encodeVarHeader(u8arr.length);
+        encoder.encodeUint8Array(u8arr);
+        return;
+    }
+    else throw new Error("Unknown Type Log");
 }
 
-function encodeArray(array: Array<BaiscType | object>, type: PotentialType): Uint8Array {
+function encodeArray(array: Array<unknown>, typeLog: TypeLog): Uint8Array {
     const encoder = EncoderPool.spawn();
-    const typeArr = [type];
     for (const ele of array)
-        encodeUnknown(encoder, ele, typeArr);
+        encodeUnknown(encoder, ele, typeLog);
     const res = encoder.toArray();
     EncoderPool.despawn(encoder);
     return res;
 }
 
-function encodeMap(map: Map<BaiscType | object, BaiscType | object>, keyType: PotentialType, valueType: PotentialType): Uint8Array {
+function encodeMap(map: Map<unknown, unknown>, keyTypeLog: TypeLog, valueTypeLog: TypeLog): Uint8Array {
     const encoder = EncoderPool.spawn();
-    const keyTypeArr = [keyType];
-    const valueTypeArr = [valueType];
     for (const [key, value] of map) {
-        encodeUnknown(encoder, key, keyTypeArr);
-        encodeUnknown(encoder, value, valueTypeArr);
+        encodeUnknown(encoder, key, keyTypeLog);
+        encodeUnknown(encoder, value, valueTypeLog);
     }
     const res = encoder.toArray();
     EncoderPool.despawn(encoder);
     return res;
 }
 
-function encodeSet(set: Set<BaiscType | object>, valueType: PotentialType): Uint8Array {
+function encodeSet(set: Set<unknown>, valueTypeLog: TypeLog): Uint8Array {
     const encoder = EncoderPool.spawn();
-    const typeArr = [valueType];
     for (const ele of set)
-        encodeUnknown(encoder, ele, typeArr);
+        encodeUnknown(encoder, ele, valueTypeLog);
     const res = encoder.toArray();
     EncoderPool.despawn(encoder);
     return res;

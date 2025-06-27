@@ -1,16 +1,13 @@
 import { getOrCreateRemixClassMeta } from "../ClassMeta";
-import { Basic } from "../Decorator";
 import { TypeCodeHelper } from "../TypeCodeHelper";
-import { CombinedTypeRecord, Constructor, PotentialType, TypeRecord } from "../TypeDef";
+import { CombinedTypeRecord, Constructor, isTypeRecord, TypeRecord } from "../TypeDef";
+import { ArrayTypeLog, BasicTypeLog, CustomTypeLog, MapTypeLog, SetTypeLog, TypeLog } from "../TypeLog";
 
-export function protoFromObj<T extends object>(object: Object, type: Constructor<T> | TypeRecord<T>): T {
+export function protoFromObj<T extends object>(object: Object, type: Constructor<T> | TypeRecord<T> | CombinedTypeRecord<T>): T {
     return recordFromObj(object, type);
 }
 
-function recordFromObj<T extends object>(object: any, type: PotentialType<T>): T {
-    if (type === Basic)
-        throw new Error("Basic type not supported");
-
+function recordFromObj<T extends object>(object: any, type: Constructor<T> | TypeRecord<T> | CombinedTypeRecord<T>): T {
     let classType: Constructor<T>;
     if (!isTypeRecord(type))
         classType = type;
@@ -29,7 +26,7 @@ function recordFromObj<T extends object>(object: any, type: PotentialType<T>): T
         if (remixFieldMeta === undefined)
             continue;
 
-        const obj = decodeUnknown(object[key], remixFieldMeta.typeArr);
+        const obj = unknownFromObj(object[key], remixFieldMeta.typeLog);
         res[remixFieldMeta.name] = obj;
         setted.push(remixFieldMeta.name);
     }
@@ -46,48 +43,41 @@ function recordFromObj<T extends object>(object: any, type: PotentialType<T>): T
 }
 
 
-function decodeUnknown(object: unknown, typeArr: PotentialType[]): unknown {
-    if (object instanceof Date || object == null || typeof object === "string" || typeof object === "number" || typeof object === "boolean")
+function unknownFromObj(object: unknown, typeLog: TypeLog): unknown {
+    if (typeLog instanceof BasicTypeLog)
         return object;
-    if (Array.isArray(object)) {
-        if (typeArr[0] === Map)
-            return mapFromObj(object, typeArr[1], typeArr[2]);
-        else if (typeArr[0] === Set)
-            return setFromObj(object, typeArr[1]);
-        else
-            return arrayFromObj(object, typeArr[0]);
-    }
-    return recordFromObj(object, typeArr[0]);
+    else if (typeLog instanceof ArrayTypeLog)
+        return arrayFromObj(object as Array<unknown>, typeLog.valueType);
+    else if (typeLog instanceof MapTypeLog)
+        return mapFromObj(object as Array<unknown>, typeLog.keyType, typeLog.valueType);
+    else if (typeLog instanceof SetTypeLog)
+        return setFromObj(object as Array<unknown>, typeLog.valueType);
+    else if (typeLog instanceof CustomTypeLog)
+        return recordFromObj(object, typeLog.type);
+    else
+        throw new Error("unknown type log");
 }
 
-function arrayFromObj(obj: Array<unknown>, type: PotentialType): Array<unknown> {
+function arrayFromObj(obj: Array<unknown>, valueTypeLog: TypeLog): Array<unknown> {
     const res: unknown[] = [];
-    const typeArr = [type];
     for (const ele of obj)
-        res.push(decodeUnknown(ele, typeArr));
+        res.push(unknownFromObj(ele, valueTypeLog));
     return res;
 }
 
-function mapFromObj(obj: Array<unknown>, keyType: PotentialType, valueType: PotentialType): Map<unknown, unknown> {
+function mapFromObj(obj: Array<unknown>, keyTypeLog: TypeLog, valueTypeLog: TypeLog): Map<unknown, unknown> {
     const res: Map<unknown, unknown> = new Map();
-    const keyTypeArr = [keyType];
-    const valueTypeArr = [valueType];
     for (let i = 0; i < obj.length; i += 2) {
-        const key = decodeUnknown(obj[i], keyTypeArr);
-        const value = decodeUnknown(obj[i + 1], valueTypeArr);
+        const key = unknownFromObj(obj[i], keyTypeLog);
+        const value = unknownFromObj(obj[i + 1], valueTypeLog);
         res.set(key, value);
     }
     return res;
 }
 
-function setFromObj(obj: Array<unknown>, valueType: PotentialType): Set<unknown> {
+function setFromObj(obj: Array<unknown>, valuetypeLog: TypeLog): Set<unknown> {
     const res: Set<unknown> = new Set();
-    const typeArr = [valueType];
     for (const ele of obj)
-        res.add(decodeUnknown(ele, typeArr));
+        res.add(unknownFromObj(ele, valuetypeLog));
     return res;
-}
-
-function isTypeRecord<T extends object>(type: PotentialType<T>): type is TypeRecord<T> | CombinedTypeRecord<T> {
-    return typeof type != "function" && type != null;
 }

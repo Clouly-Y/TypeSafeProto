@@ -9,7 +9,7 @@ import { protoToObj } from "./Proto/ProtoToObj";
 import { TypeCodeHelper } from "./TypeCodeHelper";
 import { fieldNameToIndex, indexToFieldName, isProtomember, protoClone, releaseCaches } from "./Utils";
 
-export type { BaiscType, CombinedTypeRecord, TypeRecord } from "./TypeDef";
+export type { CombinedTypeRecord, TypeRecord } from "./TypeDef";
 export type { BinaryDecoder, BinaryEncoder, TypeCodeHelper };
 
 const proto = {

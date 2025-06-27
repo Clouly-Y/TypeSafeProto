@@ -1,19 +1,16 @@
 import { BinaryDecoder } from "../Binary/BinaryDecoder";
 import { getOrCreateRemixClassMeta } from "../ClassMeta";
-import { Basic } from "../Decorator";
 import Mark from "../Mark";
 import { TypeCodeHelper } from "../TypeCodeHelper";
-import { CombinedTypeRecord, Constructor, PotentialType, TypeRecord } from "../TypeDef";
+import { CombinedTypeRecord, Constructor, isTypeRecord, TypeRecord } from "../TypeDef";
+import { ArrayTypeLog, BasicTypeLog, CustomTypeLog, MapTypeLog, SetTypeLog, TypeLog } from "../TypeLog";
 
-export function protoDecode<T extends object>(data: Uint8Array, type: Constructor<T> | TypeRecord<T>): T {
+export function protoDecode<T extends object>(data: Uint8Array, type: Constructor<T> | TypeRecord<T> | CombinedTypeRecord<T>): T {
     const decoder = new BinaryDecoder(data);
     return decodeRecord(decoder, data.length, type);
 }
 
-function decodeRecord<T extends object>(decoder: BinaryDecoder, byteLength: number, type: PotentialType<T>): T {
-    if (type === Basic)
-        throw new Error("Basic type not supported");
-
+function decodeRecord<T extends object>(decoder: BinaryDecoder, byteLength: number, type: Constructor<T> | TypeRecord<T> | CombinedTypeRecord<T>): T {
     let aimPos = decoder.currentPos + byteLength;
     let classType: Constructor<T>;
     if (!isTypeRecord(type))
@@ -21,7 +18,7 @@ function decodeRecord<T extends object>(decoder: BinaryDecoder, byteLength: numb
     else {
         let typeOrHelper: Constructor<T> | TypeCodeHelper<T> = TypeCodeHelper.get(type);
         while (typeOrHelper instanceof TypeCodeHelper) {
-            const nextCode = decoder.decodeNumber(null);
+            const nextCode = decoder.decodeNumber();
             typeOrHelper = typeOrHelper.codeToType(nextCode);
         }
         classType = typeOrHelper;
@@ -31,24 +28,21 @@ function decodeRecord<T extends object>(decoder: BinaryDecoder, byteLength: numb
     const res: Record<string, any> = new classType();
     const setted: string[] = [];
     while (decoder.currentPos < aimPos) {
-        const hierarchy = decoder.decodeNumber(null);
-        const index = decoder.decodeNumber(null);
+        const hierarchy = decoder.decodeNumber();
+        const index = decoder.decodeNumber();
 
         const remixFieldMeta = remixClassMeta.fieldIndexMap.get(hierarchy)?.get(index);
-        const typeMark = decoder.getTypeMark();
+        const nextU8 = decoder.peek();
         if (remixFieldMeta === undefined) {
-            switch (Mark.markToType(typeMark)) {
-                case null: break;
-                case Boolean: break;
-                case Number: decoder.decodeNumber(typeMark); break;
-                case String: decoder.skip(decoder.decodeStringHeader(typeMark)); break;
-                case Array: decoder.skip(decoder.decodeArrayHeader(typeMark)); break;
-                case Date: decoder.skip(8); break;
-                case Mark.RECORD: decoder.skip(decoder.decodeNumber(null)); break;
-            }
+            if (nextU8 < Mark.NIL)
+                decoder.decodeNumber();
+            else if (nextU8 == Mark.NIL)
+                decoder.skip(1);
+            else
+                decoder.skip(decoder.decodeVarHeader());
             continue;
         }
-        const obj = decodeUnknown(decoder, typeMark, remixFieldMeta.typeArr);
+        const obj = decodeUnknown(decoder, remixFieldMeta.typeLog);
         res[remixFieldMeta.name] = obj;
         setted.push(remixFieldMeta.name);
     }
@@ -65,63 +59,66 @@ function decodeRecord<T extends object>(decoder: BinaryDecoder, byteLength: numb
 }
 
 
-function decodeUnknown(decoder: BinaryDecoder, typeMark: number | null, typeArr: PotentialType[]): unknown {
-    typeMark = typeMark ?? decoder.getTypeMark();
-    switch (Mark.markToType(typeMark)) {
-        case null: return decoder.decodeNil(typeMark);
-        case Boolean: return decoder.decodeBoolean(typeMark);
-        case Number: return decoder.decodeNumber(typeMark);
-        case String: {
-            const byteLength = decoder.decodeStringHeader(typeMark);
-            return decoder.decodeString(byteLength);
-        }
-        case Array: {
-            const byteLength = decoder.decodeArrayHeader(typeMark);
-            switch (typeArr[0]) {
-                case Map: return decodeMap(decoder, byteLength, typeArr[1], typeArr[2]);
-                case Set: return decodeSet(decoder, byteLength, typeArr[1]);
-                default: return decodeArray(decoder, byteLength, typeArr[0]);
-            }
-        }
-        case Date: return decoder.decodeDate(typeMark);
-        default: { //Mark.RECORD
-            const byteLength = decoder.decodeRecordHeader(typeMark);
-            return decodeRecord(decoder, byteLength, typeArr[0]);
+function decodeUnknown(decoder: BinaryDecoder, typeLog: TypeLog): unknown {
+    if (decoder.peek() === Mark.NIL)
+        return decoder.decodeNil();
+
+    if (typeLog instanceof BasicTypeLog) {
+        switch (typeLog.type) {
+            case Number: return decoder.decodeNumber();
+            case Boolean: return decoder.decodeBoolean();
+            case Date: return new Date(decoder.decodeNumber());
+
+            case String:
+                const length = decoder.decodeVarHeader();
+                return decoder.decodeString(length);
+            default: throw new Error("Unknown Basic Type");
         }
     }
+    else if (typeLog instanceof CustomTypeLog) {
+        const length = decoder.decodeVarHeader();
+        return decodeRecord(decoder, length, typeLog.type);
+    }
+    else if (typeLog instanceof ArrayTypeLog) {
+        const length = decoder.decodeVarHeader();
+        return decodeArray(decoder, length, typeLog.valueType);
+
+    }
+    else if (typeLog instanceof MapTypeLog) {
+        const length = decoder.decodeVarHeader();
+        return decodeMap(decoder, length, typeLog.keyType, typeLog.valueType);
+
+    }
+    else if (typeLog instanceof SetTypeLog) {
+        const length = decoder.decodeVarHeader();
+        return decodeSet(decoder, length, typeLog.valueType);
+    }
+    else throw new Error("Unknown Type Log");
 }
 
-function decodeArray(decoder: BinaryDecoder, byteLength: number, type: PotentialType): Array<unknown> {
+function decodeArray(decoder: BinaryDecoder, byteLength: number, valueTypeLog: TypeLog): Array<unknown> {
     const res: unknown[] = [];
     const aimPos = decoder.currentPos + byteLength;
-    const typeArr = [type];
     while (decoder.currentPos < aimPos)
-        res.push(decodeUnknown(decoder, null, typeArr));
+        res.push(decodeUnknown(decoder, valueTypeLog));
     return res;
 }
 
-function decodeMap(decoder: BinaryDecoder, byteLength: number, keyType: PotentialType, valueType: PotentialType): Map<unknown, unknown> {
+function decodeMap(decoder: BinaryDecoder, byteLength: number, keyTypeLog: TypeLog, valueTypeLog: TypeLog): Map<unknown, unknown> {
     const res: Map<unknown, unknown> = new Map();
     const aimPos = decoder.currentPos + byteLength;
-    const keyTypeArr = [keyType];
-    const valueTypeArr = [valueType];
     while (decoder.currentPos < aimPos) {
-        const key = decodeUnknown(decoder, null, keyTypeArr);
-        const value = decodeUnknown(decoder, null, valueTypeArr);
+        const key = decodeUnknown(decoder, keyTypeLog);
+        const value = decodeUnknown(decoder, valueTypeLog);
         res.set(key, value);
     }
     return res;
 }
 
-function decodeSet(decoder: BinaryDecoder, byteLength: number, valueType: PotentialType): Set<unknown> {
+function decodeSet(decoder: BinaryDecoder, byteLength: number, valueTypeLog: TypeLog): Set<unknown> {
     const res: Set<unknown> = new Set();
     const aimPos = decoder.currentPos + byteLength;
-    const valueTypeArr = [valueType];
     while (decoder.currentPos < aimPos)
-        res.add(decodeUnknown(decoder, null, valueTypeArr));
+        res.add(decodeUnknown(decoder, valueTypeLog));
     return res;
-}
-
-function isTypeRecord<T extends object>(type: PotentialType<T>): type is TypeRecord<T> | CombinedTypeRecord<T> {
-    return typeof type != "function" && type != null;
 }
