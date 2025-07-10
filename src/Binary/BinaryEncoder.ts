@@ -47,8 +47,8 @@ export class BinaryEncoder {
 
     public encodeNumber(object: number): void {
         if (!Number.isSafeInteger(object)) {
-            this.streanmWriter.writeU8(Mark.FLOAT32);
-            this.streanmWriter.writeF32(object);
+            this.streanmWriter.writeU8(Mark.DOUBLE);
+            this.streanmWriter.writeF64(object);
             return;
         }
         if (object >= 0) {

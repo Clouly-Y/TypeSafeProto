@@ -7,7 +7,7 @@ import { protoEncode } from "./Proto/ProtoEncoder";
 import { protoFromObj } from "./Proto/ProtoFromObj";
 import { protoToObj } from "./Proto/ProtoToObj";
 import { TypeCodeHelper } from "./TypeCodeHelper";
-import { fieldNameToIndex, indexToFieldName, isProtomember, protoClone, releaseCaches } from "./Utils";
+import { codeToType, fieldNameToIndex, indexToFieldName, isProtomember, protoClone, releaseCaches, typeToCode } from "./Utils";
 
 export type { BaiscType, CombinedTypeRecord, TypeRecord } from "./TypeDef";
 export type { BinaryDecoder, BinaryEncoder, TypeCodeHelper };
@@ -24,6 +24,8 @@ const proto = {
     clone: protoClone,
     fieldNameToIndex: fieldNameToIndex,
     indexToFieldName: indexToFieldName,
+    typeToCode: typeToCode,
+    codeToType: codeToType,
 
     Mark: Mark,
     BinaryDecoder: BinaryDecoder,

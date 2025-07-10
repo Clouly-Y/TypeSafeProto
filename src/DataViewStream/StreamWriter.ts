@@ -44,10 +44,10 @@ export class StreamWriter {
         this.writeU32(low);
     }
 
-    public writeF32(value: number) {
-        this.ensureBufferSizeToWrite(4);
-        this.view.setFloat32(this.offset, value);
-        this.offset += 4;
+    public writeF64(value: number) {
+        this.ensureBufferSizeToWrite(8);
+        this.view.setFloat64(this.offset, value);
+        this.offset += 8;
     }
 
     public writeString(str: string) {

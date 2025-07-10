@@ -39,7 +39,7 @@ export class BinaryDecoder {
         else if (typeMark >= Mark.NEGATIVE_FIX_INT_START)
             return typeMark - 0x100;
         else switch (typeMark) {
-            case Mark.FLOAT32: return this.streamReader.readF32();
+            case Mark.DOUBLE: return this.streamReader.readF64();
             case Mark.P_INT_8: return this.streamReader.readU8();
             case Mark.P_INT_16: return this.streamReader.readU16();
             case Mark.P_INT_32: return this.streamReader.readU32();

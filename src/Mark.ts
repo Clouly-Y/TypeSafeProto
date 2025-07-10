@@ -15,7 +15,7 @@ export default class Mark {
     public static readonly FALSE = 0xc2;
     public static readonly TRUE = 0xc3;
 
-    public static readonly FLOAT32 = 0xca;
+    public static readonly DOUBLE = 0xca;
 
     //0xcb
 
@@ -71,7 +71,7 @@ export default class Mark {
                 case Mark.FALSE:
                 case Mark.TRUE: return Boolean;
 
-                case Mark.FLOAT32:
+                case Mark.DOUBLE:
                 case Mark.P_INT_8:
                 case Mark.P_INT_16:
                 case Mark.P_INT_32:

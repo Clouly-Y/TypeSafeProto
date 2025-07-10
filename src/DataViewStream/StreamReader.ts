@@ -38,9 +38,9 @@ export class StreamReader {
         return high * 0x1_0000_0000 + low;
     }
 
-    public readF32() {
-        const value = this.view.getFloat32(this.offset);
-        this.offset += 4;
+    public readF64() {
+        const value = this.view.getFloat64(this.offset);
+        this.offset += 8;
         return value;
     }
 
