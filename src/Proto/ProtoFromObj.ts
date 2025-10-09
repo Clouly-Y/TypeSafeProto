@@ -3,7 +3,7 @@ import { Basic } from "../Decorator";
 import { TypeCodeHelper } from "../TypeCodeHelper";
 import { CombinedTypeRecord, Constructor, PotentialType, TypeRecord } from "../TypeDef";
 
-export function protoFromObj<T extends object>(object: Object, type: Constructor<T> | TypeRecord<T>): T {
+export function protoFromObj<T extends object>(object: Object, type: Constructor<T> | TypeRecord<T> | CombinedTypeRecord<T>): T {
     return recordFromObj(object, type);
 }
 

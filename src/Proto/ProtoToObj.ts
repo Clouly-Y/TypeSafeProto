@@ -1,9 +1,9 @@
 import { getOrCreateRemixClassMeta } from "../ClassMeta";
 import { isSameArray } from "../Helper";
 import { TypeCodeHelper } from "../TypeCodeHelper";
-import { BaiscType, Constructor, PotentialType, TypeRecord } from "../TypeDef";
+import { BaiscType, CombinedTypeRecord, Constructor, PotentialType, TypeRecord } from "../TypeDef";
 
-export function protoToObj<T extends object>(classInstance: T, typecodeRecord: TypeRecord<T> | null = null): object {
+export function protoToObj<T extends object>(classInstance: T, typecodeRecord: TypeRecord<T> | CombinedTypeRecord<T> | null = null): object {
     if (classInstance.constructor === Object)
         throw new Error("classInstance must be a custom class!");
 
