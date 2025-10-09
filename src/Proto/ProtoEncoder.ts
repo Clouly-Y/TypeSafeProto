@@ -3,9 +3,9 @@ import { getOrCreateRemixClassMeta } from "../ClassMeta";
 import EncoderPool from "../EncoderPool";
 import { isSameArray } from "../Helper";
 import { TypeCodeHelper } from "../TypeCodeHelper";
-import { BaiscType, Constructor, PotentialType, TypeRecord } from "../TypeDef";
+import { BaiscType, CombinedTypeRecord, Constructor, PotentialType, TypeRecord } from "../TypeDef";
 
-export function protoEncode<T extends object>(classInstance: T, typecodeRecord: TypeRecord<T> | null = null): Uint8Array {
+export function protoEncode<T extends object>(classInstance: T, typecodeRecord: TypeRecord<T> | CombinedTypeRecord<T> | null = null): Uint8Array {
     if (classInstance.constructor === Object)
         throw new Error("classInstance must be a custom class!");
 

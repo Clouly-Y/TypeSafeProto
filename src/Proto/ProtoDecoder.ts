@@ -5,7 +5,7 @@ import Mark from "../Mark";
 import { TypeCodeHelper } from "../TypeCodeHelper";
 import { CombinedTypeRecord, Constructor, PotentialType, TypeRecord } from "../TypeDef";
 
-export function protoDecode<T extends object>(data: Uint8Array, type: Constructor<T> | TypeRecord<T>): T {
+export function protoDecode<T extends object>(data: Uint8Array, type: Constructor<T> | CombinedTypeRecord<T> | TypeRecord<T>): T {
     const decoder = new BinaryDecoder(data);
     return decodeRecord(decoder, data.length, type);
 }
