@@ -89,4 +89,10 @@ export class StreamReader {
 
         return result;
     }
+
+    public readU8Array(byteLength: number) {
+        const startByte = this.offset;
+        this.offset += byteLength;
+        return new Uint8Array(this.view.buffer.slice(startByte, startByte + byteLength));
+    }
 }

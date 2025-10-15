@@ -91,13 +91,17 @@ function decodeUnknown(decoder: BinaryDecoder, typeMark: number | null, typeArr:
     }
 }
 
-function decodeArray(decoder: BinaryDecoder, byteLength: number, type: PotentialType): Array<unknown> {
+function decodeArray(decoder: BinaryDecoder, byteLength: number, type: PotentialType): Array<unknown> | Uint8Array {
     const res: unknown[] = [];
     const aimPos = decoder.currentPos + byteLength;
     const typeArr = [type];
-    while (decoder.currentPos < aimPos)
-        res.push(decodeUnknown(decoder, null, typeArr));
-    return res;
+    if (type == Uint8Array)
+        return decoder.decodeU8Array(byteLength);
+    else {
+        while (decoder.currentPos < aimPos)
+            res.push(decodeUnknown(decoder, null, typeArr));
+        return res;
+    }
 }
 
 function decodeMap(decoder: BinaryDecoder, byteLength: number, keyType: PotentialType, valueType: PotentialType): Map<unknown, unknown> {

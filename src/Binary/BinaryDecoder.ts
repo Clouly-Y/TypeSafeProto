@@ -92,4 +92,8 @@ export class BinaryDecoder {
     public decodeString(byteLength: number): string {
         return this.streamReader.readStrng(byteLength);
     }
+
+    public decodeU8Array(byteLength:number): Uint8Array{
+        return this.streamReader.readU8Array(byteLength);
+    }
 }

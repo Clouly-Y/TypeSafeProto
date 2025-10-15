@@ -3,7 +3,7 @@ export class StreamWriter {
     private view: DataView;
     private bytes: Uint8Array;
 
-    constructor(initSize: number = 2048) {
+    constructor(initSize: number = 512) {
         initSize = Math.max(initSize, 0);
         const buffer = new ArrayBuffer(initSize);
         this.view = new DataView(buffer);
@@ -16,7 +16,7 @@ export class StreamWriter {
     }
 
     public toArray(): Uint8Array {
-        return this.bytes.subarray(0, this.offset);
+        return this.bytes.slice(0, this.offset);
     }
 
     public writeU8(value: number) {

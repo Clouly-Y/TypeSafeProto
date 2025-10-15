@@ -62,6 +62,10 @@ function encodeUnknown(encoder: BinaryEncoder, object: unknown, typeArr: Potenti
         buffer = encodeSet(object, typeArr[1]);
         encoder.encodeArrayHeader(buffer.length);
     }
+    else if (object instanceof Uint8Array) {
+        buffer = object;
+        encoder.encodeArrayHeader(buffer.length);
+    }
     else if (Array.isArray(object)) {
         buffer = encodeArray(object, typeArr[0]);
         encoder.encodeArrayHeader(buffer.length);
@@ -74,7 +78,7 @@ function encodeUnknown(encoder: BinaryEncoder, object: unknown, typeArr: Potenti
     encoder.encodeUint8Array(buffer);
 }
 
-function encodeArray(array: Array<BaiscType | object>, type: PotentialType): Uint8Array {
+function encodeArray(array: Array<BaiscType | object> | Uint8Array, type: PotentialType): Uint8Array {
     const encoder = EncoderPool.spawn();
     const typeArr = [type];
     for (const ele of array)
