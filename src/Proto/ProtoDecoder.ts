@@ -31,8 +31,16 @@ function decodeRecord<T extends object>(decoder: BinaryDecoder, byteLength: numb
     const res: Record<string, any> = new classType();
     const setted: string[] = [];
     while (decoder.currentPos < aimPos) {
-        const hierarchy = decoder.decodeNumber(null);
-        const index = decoder.decodeNumber(null);
+        let hierarchy: number, index: number
+        const firstNum = decoder.decodeNumber(null);
+        if (firstNum < 0) {
+            hierarchy = firstNum;
+            index = decoder.decodeNumber(null);
+        }
+        else {
+            hierarchy = 0;
+            index = firstNum;
+        }
 
         const remixFieldMeta = remixClassMeta.fieldIndexMap.get(hierarchy)?.get(index);
         const typeMark = decoder.getTypeMark();

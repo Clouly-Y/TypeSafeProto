@@ -1,7 +1,6 @@
 import { BinaryEncoder } from "../Binary/BinaryEncoder";
 import { getOrCreateRemixClassMeta } from "../ClassMeta";
 import EncoderPool from "../EncoderPool";
-import { isSameArray } from "../Helper";
 import { TypeCodeHelper } from "../TypeCodeHelper";
 import { BaiscType, CombinedTypeRecord, Constructor, PotentialType, TypeRecord } from "../TypeDef";
 
@@ -32,12 +31,11 @@ function encodeRecord<T extends object>(object: T, type: PotentialType): Uint8Ar
         const value = object[key];
         if (value === remixFieldMeta.defValue)
             continue;
-        if (isSameArray(value, remixFieldMeta.defValue))
-            continue;
         if (value == null && remixFieldMeta.defValue == null)
             continue;
-        /** +层级 +标号 +长度？ +数据*/
-        encoder.encodeNumber(remixFieldMeta.hierarchy);
+        /** +层级? +标号 +长度？ +数据*/
+        if (remixFieldMeta.hierarchy < 0)
+            encoder.encodeNumber(remixFieldMeta.hierarchy);
         encoder.encodeNumber(remixFieldMeta.index);
         encodeUnknown(encoder, value, remixFieldMeta.typeArr);
     }

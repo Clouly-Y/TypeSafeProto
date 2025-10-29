@@ -28,6 +28,7 @@ export class RemixClassMeta {
 export class RemixFieldMeta {
     public name: string;
     public index: number;
+    /** 继承层级<=0；-1代表父类中的字段 */
     public hierarchy: number;
     public typeArr: Array<PotentialType>;
     public defValue: unknown;
@@ -67,26 +68,28 @@ export function getOrCreateRemixClassMeta(classType: Constructor): RemixClassMet
 
     remixClassMeta = new RemixClassMeta();
 
-    let hierarchy = 0;
+    let hierarchy = 1;
     for (const type of getAllParentClasses(classType)) {
+        hierarchy--;
+
         const classMeta = classMetaMap.get(type);
-        if (classMeta !== undefined) {
-            for (const fieldMeta of classMeta.fieldMap.values()) {
-                if (fieldMeta.index === undefined)
-                    continue;
-                const remixFieldMeta = new RemixFieldMeta(fieldMeta.name, fieldMeta.index, hierarchy, fieldMeta.typeArr, fieldMeta.defValue);
+        if (!classMeta)
+            continue;
 
-                remixClassMeta.fieldNameMap.set(fieldMeta.name, remixFieldMeta);
+        for (const fieldMeta of classMeta.fieldMap.values()) {
+            if (fieldMeta.index === undefined)
+                continue;
+            const remixFieldMeta = new RemixFieldMeta(fieldMeta.name, fieldMeta.index, hierarchy, fieldMeta.typeArr, fieldMeta.defValue);
 
-                let subMap = remixClassMeta.fieldIndexMap.get(hierarchy);
-                if (subMap === undefined) {
-                    subMap = new Map();
-                    remixClassMeta.fieldIndexMap.set(hierarchy, subMap);
-                }
-                subMap.set(fieldMeta.index, remixFieldMeta);
+            remixClassMeta.fieldNameMap.set(fieldMeta.name, remixFieldMeta);
+
+            let subMap = remixClassMeta.fieldIndexMap.get(hierarchy);
+            if (subMap === undefined) {
+                subMap = new Map();
+                remixClassMeta.fieldIndexMap.set(hierarchy, subMap);
             }
+            subMap.set(fieldMeta.index, remixFieldMeta);
         }
-        hierarchy++;
     }
 
     remixClassMetaMap.set(classType, remixClassMeta);
