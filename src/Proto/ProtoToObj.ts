@@ -40,7 +40,7 @@ function recordToObj<T extends object>(object: T, type: PotentialType): object {
 }
 
 function encodeUnknown(object: unknown, typeArr: PotentialType[]): unknown {
-    if (object instanceof Date || object == null || typeof object === "string" || typeof object === "number" || typeof object === "boolean")
+    if (object instanceof Date || object == null || typeof object === "string" || typeof object === "number" || typeof object === "boolean" || object instanceof Uint8Array)
         return object;
     if (object instanceof Map)
         return mapToObj(object, typeArr[1], typeArr[2]);

@@ -47,7 +47,7 @@ function recordFromObj<T extends object>(object: any, type: PotentialType<T>): T
 
 
 function decodeUnknown(object: unknown, typeArr: PotentialType[]): unknown {
-    if (object instanceof Date || object == null || typeof object === "string" || typeof object === "number" || typeof object === "boolean")
+    if (object instanceof Date || object == null || typeof object === "string" || typeof object === "number" || typeof object === "boolean" || object instanceof Uint8Array)
         return object;
     if (Array.isArray(object)) {
         if (typeArr[0] === Map)
