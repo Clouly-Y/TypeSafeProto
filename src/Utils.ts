@@ -38,6 +38,11 @@ export function indexToFieldName(classType: Constructor, hierarchy: number, inde
     return remixClassMeta.fieldIndexMap.get(hierarchy)?.get(index)?.name;
 }
 
+export function getAllFields(classType: Constructor) {
+    const remixClassMeta = getOrCreateRemixClassMeta(classType);
+    return Array.from(remixClassMeta.fieldNameMap.keys());
+}
+
 export function codeToType<T extends object>(record: TypeRecord<T> | CombinedTypeRecord<T>, code: number | number[]): Constructor<T> {
     if (Array.isArray(code)) {
         let helper = TypeCodeHelper.get(record);
