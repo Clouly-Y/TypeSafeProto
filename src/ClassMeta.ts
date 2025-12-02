@@ -28,10 +28,12 @@ export class RemixClassMeta {
 export class RemixFieldMeta {
     public name: string;
     public index: number;
-    /** 继承层级<=0；-1代表父类中的字段 */
+    /** 继承层级<= -1；0为obejct */
     public hierarchy: number;
     public typeArr: Array<PotentialType>;
     public defValue: unknown;
+    /** 同名的最父级字段的数据 */
+    public parentFieldMeta: RemixFieldMeta | undefined;
 
     constructor(name: string, index: number, inheritanceHierarchy: number, typeArr: Array<PotentialType>, defValue: unknown) {
         this.name = name;
@@ -61,6 +63,12 @@ export function getOrCreateFieldMeta(classMeta: ClassMeta, fieldName: string): F
     return fieldMeta;
 }
 
+/** 整理类的所有字段及基类字段
+ * 会给每个字段记录一个继承层级
+ * object为0
+ * 从-1开始，是第一个继承object的类class A
+ * 然后-2是继承A的类class B extends A
+ */
 export function getOrCreateRemixClassMeta(classType: Constructor): RemixClassMeta {
     let remixClassMeta = remixClassMetaMap.get(classType);
     if (remixClassMeta !== undefined)
@@ -68,10 +76,9 @@ export function getOrCreateRemixClassMeta(classType: Constructor): RemixClassMet
 
     remixClassMeta = new RemixClassMeta();
 
-    let hierarchy = 1;
-    for (const type of getAllParentClasses(classType)) {
-        hierarchy--;
-
+    const types = [...getAllParentClasses(classType)].reverse();
+    for (let hierarchy = -1; hierarchy >= -types.length; hierarchy--) {
+        const type = types[-hierarchy - 1];
         const classMeta = classMetaMap.get(type);
         if (!classMeta)
             continue;
@@ -81,6 +88,10 @@ export function getOrCreateRemixClassMeta(classType: Constructor): RemixClassMet
                 continue;
             const remixFieldMeta = new RemixFieldMeta(fieldMeta.name, fieldMeta.index, hierarchy, fieldMeta.typeArr, fieldMeta.defValue);
 
+            //允许子类覆盖基类的标签,并记录同名最父级字段的数据
+            const parentField = remixClassMeta.fieldNameMap.get(fieldMeta.name);
+            if (parentField)
+                remixFieldMeta.parentFieldMeta = parentField.parentFieldMeta ?? parentField;
             remixClassMeta.fieldNameMap.set(fieldMeta.name, remixFieldMeta);
 
             let subMap = remixClassMeta.fieldIndexMap.get(hierarchy);

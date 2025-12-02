@@ -38,11 +38,11 @@ function decodeRecord<T extends object>(decoder: BinaryDecoder, byteLength: numb
             index = decoder.decodeNumber(null);
         }
         else {
-            hierarchy = 0;
+            hierarchy = -1;
             index = firstNum;
         }
 
-        const remixFieldMeta = remixClassMeta.fieldIndexMap.get(hierarchy)?.get(index);
+        let remixFieldMeta = remixClassMeta.fieldIndexMap.get(hierarchy)?.get(index);
         const typeMark = decoder.getTypeMark();
         if (remixFieldMeta === undefined) {
             switch (Mark.markToType(typeMark)) {
@@ -56,6 +56,8 @@ function decodeRecord<T extends object>(decoder: BinaryDecoder, byteLength: numb
             }
             continue;
         }
+        //从名字重新取出，以应用子类覆盖
+        remixFieldMeta = remixClassMeta.fieldNameMap.get(remixFieldMeta.name)!;
         const obj = decodeUnknown(decoder, typeMark, remixFieldMeta.typeArr);
         res[remixFieldMeta.name] = obj;
         setted.push(remixFieldMeta.name);

@@ -2,7 +2,7 @@
   "name": "typesafeproto",
   "author": "Clouly-Y <943592084@qq.com>",
   "license": "ISC",
-  "version": "2.2.12",
+  "version": "2.2.14",
   "description": "TypeScript中近乎完美的Class对象序列化解决方案 A near-perfect class object serialization solution for TypeScript.",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",

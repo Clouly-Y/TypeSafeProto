@@ -28,15 +28,19 @@ function encodeRecord<T extends object>(object: T, type: PotentialType): Uint8Ar
         const remixFieldMeta = remixClassMeta.fieldNameMap.get(key);
         if (remixFieldMeta === undefined)
             continue;
+        //尽量用最父级字段的index与hierarchy压缩，而用最子级字段解压
+        const index = remixFieldMeta.parentFieldMeta?.index ?? remixFieldMeta.index;
+        const hierarchy = remixFieldMeta.parentFieldMeta?.hierarchy ?? remixFieldMeta.hierarchy;
+
         const value = object[key];
         if (value === remixFieldMeta.defValue)
             continue;
         if (value == null && remixFieldMeta.defValue == null)
             continue;
         /** +层级? +标号 +长度？ +数据*/
-        if (remixFieldMeta.hierarchy < 0)
-            encoder.encodeNumber(remixFieldMeta.hierarchy);
-        encoder.encodeNumber(remixFieldMeta.index);
+        if (hierarchy < -1)
+            encoder.encodeNumber(hierarchy);
+        encoder.encodeNumber(index);
         encodeUnknown(encoder, value, remixFieldMeta.typeArr);
     }
     const res = encoder.toArray();
