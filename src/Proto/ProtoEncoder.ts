@@ -24,15 +24,12 @@ function encodeRecord<T extends object>(object: T, type: PotentialType): Uint8Ar
     }
 
     const remixClassMeta = getOrCreateRemixClassMeta(classType);
-    for (const key in object) {
-        const remixFieldMeta = remixClassMeta.fieldNameMap.get(key);
-        if (remixFieldMeta === undefined)
-            continue;
+    for (const [key, remixFieldMeta] of remixClassMeta.fieldNameMap) {
         //尽量用最父级字段的index与hierarchy压缩，而用最子级字段解压
         const index = remixFieldMeta.parentFieldMeta?.index ?? remixFieldMeta.index;
         const hierarchy = remixFieldMeta.parentFieldMeta?.hierarchy ?? remixFieldMeta.hierarchy;
 
-        const value = object[key];
+        const value = object[key as keyof T];
         if (value === remixFieldMeta.defValue)
             continue;
         if (value == null && remixFieldMeta.defValue == null)
